@@ -3,7 +3,7 @@ from setuptools import setup
 setup(
     name='vertragsassistent',
     version='1.0.0',
-    packages=[''],
+    packages=['vertragsassistent'],
     url='jlus.de',
     license='',
     author='jl',
