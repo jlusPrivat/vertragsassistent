@@ -1,3 +1,5 @@
+import decimal
+
 from PySide6.QtWidgets import *
 from PySide6 import QtCore, QtGui
 
@@ -78,6 +80,8 @@ class MainWindow(QMainWindow):
         self._contracts.clear()
 
         query = Contract.select()
+        total_price_month = decimal.Decimal(0)
+        total_price_year = decimal.Decimal(0)
         for row, contract in enumerate(query):
             today = datetime.date.today()
             active_pricing_query = ContractPricing.select()\
@@ -93,6 +97,8 @@ class MainWindow(QMainWindow):
             per_day = price / interval
             per_month = round(per_day * 30, 2)
             per_year = round(per_day * 365, 2)
+            total_price_month += decimal.Decimal(per_month)
+            total_price_year += decimal.Decimal(per_year)
             first_item = QTableWidgetItem(contract.name)
             if contract.reminder is not None and contract.reminder >= today:
                 first_item.setData(QtCore.Qt.ItemDataRole.BackgroundRole, QtGui.QColor(180, 180, 255))
@@ -100,3 +106,5 @@ class MainWindow(QMainWindow):
             self._table_contracts.setItem(row, 1, QTableWidgetItem(contract.company))
             self._table_contracts.setItem(row, 2, QTableWidgetItem(str(per_month)))
             self._table_contracts.setItem(row, 3, QTableWidgetItem(str(per_year)))
+        self._label_price_month.setText(f"{round(total_price_month, 2)} €")
+        self._label_price_year.setText(f"{round(total_price_year, 2)} €")
