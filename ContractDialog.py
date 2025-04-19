@@ -13,30 +13,61 @@ class ContractDialog(QDialog):
         self._contract = contract
 
         # initialize layout
-        layout = QVBoxLayout(self)
+        layout = QGridLayout(self)
         layout.setContentsMargins(10, 10, 10, 10)
         self.setLayout(layout)
 
         # input contract name
+        layout.addWidget(QLabel("Vertragsname"), 0, 0)
         self._input_name = QLineEdit(self, placeholderText='Vertragsname',
                                      text='' if contract is None else contract.name)
-        layout.addWidget(self._input_name)
+        layout.addWidget(self._input_name, 0, 1)
 
         # input contractor
+        layout.addWidget(QLabel("Vertragspartner"), 1, 0)
         self._input_company = QLineEdit(self, placeholderText='Vertragspartner',
                                         text='' if contract is None else contract.company)
-        layout.addWidget(self._input_company)
+        layout.addWidget(self._input_company, 1, 1)
+
+        # input description
+        layout.addWidget(QLabel("Notizen"), 2, 0)
+        self._input_notes = QPlainTextEdit(self, plainText='' if contract is None else contract.notes)
+        self._input_notes.setFixedHeight(50)
+        layout.addWidget(self._input_notes, 2, 1)
+
+        # input reminder
+        layout.addWidget(QLabel("Erinnerung"), 3, 0)
+        widget_reminder = QWidget()
+        widget_reminder_layout = QHBoxLayout()
+        widget_reminder_layout.setContentsMargins(0, 0, 0, 0)
+        widget_reminder.setLayout(widget_reminder_layout)
+        layout.addWidget(widget_reminder, 3, 1)
+
+        check_input_reminder = QCheckBox()
+        check_input_reminder.checkStateChanged.connect(
+            lambda checked: self._input_reminder.setEnabled(checked == QtCore.Qt.CheckState.Checked))
+        widget_reminder_layout.addWidget(check_input_reminder)
+        self._input_reminder = QDateEdit(self)
+        self._input_reminder.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self._input_reminder.setMinimumDate(QtCore.QDate.currentDate())
+        if contract is not None and contract.reminder is not None:
+            self._input_reminder.setDate(contract.reminder)
+            check_input_reminder.setChecked(True)
+        else:
+            self._input_reminder.setEnabled(False)
+            check_input_reminder.setChecked(False)
+        widget_reminder_layout.addWidget(self._input_reminder)
 
         # pricing table
         group_pricing = QGroupBox("Preise", self)
         layout_pricing = QGridLayout(self)
         group_pricing.setLayout(layout_pricing)
-        layout.addWidget(group_pricing)
+        layout.addWidget(group_pricing, 4, 0, 1, 2)
 
         self._table_pricing = QTableWidget(self)
         self._table_pricing.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self._table_pricing.setColumnCount(4)
-        self._table_pricing.setHorizontalHeaderLabels(["Start", "Ende", "Interval (Tage)", "Preis"])
+        self._table_pricing.setHorizontalHeaderLabels(["Start", "Ende", "Interval (Tage)", "Preis / Interval"])
         for col in range(4):
             self._table_pricing.horizontalHeader().setSectionResizeMode(col, QHeaderView.ResizeMode.Stretch)
         layout_pricing.addWidget(self._table_pricing, 0, 0, 1, 2)
@@ -52,7 +83,7 @@ class ContractDialog(QDialog):
         widget_btns = QWidget()
         widget_btns_layout = QHBoxLayout()
         widget_btns.setLayout(widget_btns_layout)
-        layout.addWidget(widget_btns)
+        layout.addWidget(widget_btns, 5, 0, 1, 2)
         widget_btns_layout.addItem(QSpacerItem(0, 0, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum))
 
         btn_abort = QPushButton("Abbrechen")
@@ -109,6 +140,9 @@ class ContractDialog(QDialog):
 
         self._contract.name = self._input_name.text()
         self._contract.company = self._input_company.text()
+        self._contract.notes = self._input_notes.toPlainText()
+        self._contract.reminder = None if not self._input_reminder.isEnabled()\
+            else self._input_reminder.date().toPython()
         self._contract.save()
 
         # delete previous dates and set new ones

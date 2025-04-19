@@ -16,7 +16,8 @@ class BaseModel(Model):
 class Contract(BaseModel):
     name = CharField()
     company = CharField()
-    reminder = DateField()
+    notes = TextField()
+    reminder = DateField(null=True)
 
 
 class ContractPricing(BaseModel):
@@ -24,7 +25,7 @@ class ContractPricing(BaseModel):
     price = DecimalField()
     payment_interval_days = IntegerField()
     start_date = DateField()
-    end_date = DateField()
+    end_date = DateField(null=True)
 
 
 class ContractTag(BaseModel):
