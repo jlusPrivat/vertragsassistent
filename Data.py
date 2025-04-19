@@ -1,4 +1,5 @@
 from peewee import *
+import datetime
 
 
 db = SqliteDatabase(None)
@@ -26,6 +27,11 @@ class ContractPricing(BaseModel):
     payment_interval_days = IntegerField()
     start_date = DateField()
     end_date = DateField(null=True)
+
+    @property
+    def is_active(self) -> bool:
+        today = datetime.date.today()
+        return today >= self.start_date and (self.end_date is None or today <= self.end_date)
 
 
 class ContractTag(BaseModel):

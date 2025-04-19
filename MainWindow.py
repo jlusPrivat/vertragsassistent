@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import *
-from PySide6 import QtCore
+from PySide6 import QtCore, QtGui
 import datetime
 
 from Data import *
@@ -65,31 +65,39 @@ class MainWindow(QMainWindow):
 
     @QtCore.Slot()
     def new_contract(self):
-        if ContractDialog().exec() == QDialog.DialogCode.Accepted:
-            self.refresh()
+        ContractDialog().exec()
+        self.refresh()
 
     @QtCore.Slot()
     def open_contract(self, row: int, _: int):
-        if ContractDialog(self._contracts[row]).exec() == QDialog.DialogCode.Accepted:
-            self.refresh()
+        ContractDialog(self._contracts[row]).exec()
+        self.refresh()
 
     @QtCore.Slot()
     def refresh(self):
         self._table_contracts.clearContents()
         self._contracts.clear()
-        query = ContractPricing.select(ContractPricing, Contract) \
-            .join(Contract) \
-            .where((ContractPricing.start_date <= datetime.date.today())
-                   & ((ContractPricing.end_date is None) | (ContractPricing.end_date >= datetime.date.today())))
-        for row, pricing in enumerate(query):
+
+        query = Contract.select()
+        for row, contract in enumerate(query):
+            today = datetime.date.today()
+            active_pricing_query = ContractPricing.select()\
+                .where((ContractPricing.contract == contract) & (ContractPricing.start_date <= today)
+                       & ((ContractPricing.end_date >> None) | (ContractPricing.end_date >= today)))\
+                .order_by(ContractPricing.start_date.desc()).limit(1)
+            pricing = None if len(active_pricing_query) == 0 else active_pricing_query[0]
+
             self._table_contracts.setRowCount(row + 1)
-            self._contracts.append(pricing.contract)
-            price = pricing.price
-            interval = pricing.payment_interval_days
+            self._contracts.append(contract)
+            price = 0 if pricing is None else pricing.price
+            interval = 365 if pricing is None else pricing.payment_interval_days
             per_day = price / interval
             per_month = round(per_day * 30, 2)
             per_year = round(per_day * 365, 2)
-            self._table_contracts.setItem(row, 0, QTableWidgetItem(pricing.contract.name))
-            self._table_contracts.setItem(row, 1, QTableWidgetItem(pricing.contract.company))
+            first_item = QTableWidgetItem(contract.name)
+            if contract.reminder is not None and contract.reminder >= today:
+                first_item.setData(QtCore.Qt.ItemDataRole.BackgroundRole, QtGui.QColor(180, 180, 255))
+            self._table_contracts.setItem(row, 0, first_item)
+            self._table_contracts.setItem(row, 1, QTableWidgetItem(contract.company))
             self._table_contracts.setItem(row, 2, QTableWidgetItem(str(per_month)))
             self._table_contracts.setItem(row, 3, QTableWidgetItem(str(per_year)))
