@@ -2,6 +2,7 @@ from PySide6.QtWidgets import *
 from PySide6 import QtCore, QtGui
 import decimal
 from Data import *
+from TagListView import TagListView
 import DocumentDialog
 import subprocess
 import platform
@@ -76,11 +77,19 @@ class ContractDialog(QDialog):
         btn_accept.clicked.connect(self.save_contract)
         widget_btns_layout.addWidget(btn_accept)
 
+        # tags
+        self._group_tags = QGroupBox("Tags", self)
+        layout_tags = QVBoxLayout(self)
+        self._group_tags.setLayout(layout_tags)
+        tag_list = TagListView(self._contract)
+        layout_tags.addWidget(tag_list)
+        layout.addWidget(self._group_tags, 5, 0, 1, 2)
+
         # pricing table
         self._group_pricing = QGroupBox("Preise", self)
         layout_pricing = QGridLayout(self)
         self._group_pricing.setLayout(layout_pricing)
-        layout.addWidget(self._group_pricing, 5, 0, 1, 2)
+        layout.addWidget(self._group_pricing, 6, 0, 1, 2)
 
         self._table_pricing = QTableView(self)
         self._table_pricing.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
@@ -97,7 +106,7 @@ class ContractDialog(QDialog):
         self._group_docs = QGroupBox("Dokumente", self)
         layout_docs = QGridLayout(self)
         self._group_docs.setLayout(layout_docs)
-        layout.addWidget(self._group_docs, 6, 0, 1, 2)
+        layout.addWidget(self._group_docs, 7, 0, 1, 2)
 
         self._table_docs = QTableView(self)
         self._table_docs.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)

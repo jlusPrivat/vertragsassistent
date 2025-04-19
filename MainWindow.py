@@ -2,9 +2,9 @@ import decimal
 
 from PySide6.QtWidgets import *
 from PySide6 import QtCore, QtGui
-
 from Data import *
 from ContractDialog import ContractDialog
+from TagListView import TagListView
 
 
 class MainWindow(QMainWindow):
@@ -12,7 +12,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self._contracts = []
         self.setWindowTitle(f"Vertragsassistenz ({file})")
-        self.setFixedSize(600, 500)
+        self.setMinimumSize(500, 300)
 
         # initialize main widget
         root = QWidget(self)
@@ -34,7 +34,7 @@ class MainWindow(QMainWindow):
         window_layout.addWidget(group_contract_tags, 1, 0, 1, 0)
         group_contract_tags_layout = QVBoxLayout()
         group_contract_tags.setLayout(group_contract_tags_layout)
-        self._contract_tags = QListWidget(self)
+        self._contract_tags = TagListView()
         group_contract_tags_layout.addWidget(self._contract_tags)
 
         # add table for contracts
