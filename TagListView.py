@@ -9,7 +9,6 @@ class TagListView(QListView):
     def __init__(self, contract: Contract | None = None, /):
         super().__init__()
         self.set_contract(contract)
-        self.setFixedHeight(50)
         self.setViewMode(QListView.ViewMode.IconMode)
         self._model.selected_tags_changed.connect(self.selected_tags_changed)
 

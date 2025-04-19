@@ -18,7 +18,7 @@ class ContractDialog(QDialog):
         self.setMinimumSize(600, 500)
 
         # initialize layout
-        layout = QGridLayout(self)
+        layout = QGridLayout()
         layout.setContentsMargins(10, 10, 10, 10)
         self.setLayout(layout)
 
@@ -77,19 +77,24 @@ class ContractDialog(QDialog):
         btn_accept.clicked.connect(self.save_contract)
         widget_btns_layout.addWidget(btn_accept)
 
+        # tab view
+        tab_widget = QTabWidget()
+        layout.addWidget(tab_widget, 5, 0, 1, 2)
+        layout.setRowStretch(5, 1)
+
         # tags
-        self._group_tags = QGroupBox("Tags", self)
+        self._group_tags = QWidget()
+        tab_widget.addTab(self._group_tags, "Tags")
         layout_tags = QVBoxLayout(self)
         self._group_tags.setLayout(layout_tags)
         self._tag_list = TagListView(self._contract)
         layout_tags.addWidget(self._tag_list)
-        layout.addWidget(self._group_tags, 5, 0, 1, 2)
 
         # pricing table
-        self._group_pricing = QGroupBox("Preise", self)
+        self._group_pricing = QWidget()
+        tab_widget.addTab(self._group_pricing, "Preise")
         layout_pricing = QGridLayout(self)
         self._group_pricing.setLayout(layout_pricing)
-        layout.addWidget(self._group_pricing, 6, 0, 1, 2)
 
         self._table_pricing = QTableView(self)
         self._table_pricing.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
@@ -103,10 +108,10 @@ class ContractDialog(QDialog):
         layout_pricing.addWidget(btn_rem_pricing, 1, 1)
 
         # documents
-        self._group_docs = QGroupBox("Dokumente", self)
+        self._group_docs = QWidget()
+        tab_widget.addTab(self._group_docs, "Dokumente")
         layout_docs = QGridLayout(self)
         self._group_docs.setLayout(layout_docs)
-        layout.addWidget(self._group_docs, 7, 0, 1, 2)
 
         self._table_docs = QTableView(self)
         self._table_docs.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)

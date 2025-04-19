@@ -32,16 +32,18 @@ class MainWindow(QMainWindow):
 
         # add list view for the contract tags
         group_contract_tags = QGroupBox("Vertrags Tags", self)
-        window_layout.addWidget(group_contract_tags, 1, 0, 1, 0)
+        window_layout.addWidget(group_contract_tags, 1, 0, 1, 2)
         group_contract_tags_layout = QVBoxLayout()
         group_contract_tags.setLayout(group_contract_tags_layout)
         self._contract_tags = TagListView()
+        self._contract_tags.setFixedHeight(70)
         self._contract_tags.selected_tags_changed.connect(self.apply_tag_filter)
         group_contract_tags_layout.addWidget(self._contract_tags)
 
         # add table for contracts
         group_contracts = QGroupBox("Verträge", self)
-        window_layout.addWidget(group_contracts, 2, 0, 1, 0)
+        window_layout.addWidget(group_contracts, 2, 0, 1, 2)
+        window_layout.setRowStretch(2, 1)
         group_contracts_layout = QGridLayout()
         group_contracts.setLayout(group_contracts_layout)
         group_contracts_layout.addWidget(QLabel("Nur aktuell gültige Preise werden angezeigt"), 0, 0, 1, 0)
@@ -53,15 +55,20 @@ class MainWindow(QMainWindow):
         self._table_contracts.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self._table_contracts.cellDoubleClicked.connect(self.open_contract)
         self._table_contracts.setHorizontalHeaderLabels(["Bezeichnung", "Anbieter", "Preis / Monat", "Preis / Jahr"])
-        for col in range(4):
-            self._table_contracts.horizontalHeader().setSectionResizeMode(col, QHeaderView.ResizeMode.Stretch)
+        for col, val in enumerate([QHeaderView.ResizeMode.Interactive, QHeaderView.ResizeMode.Stretch,
+                                   QHeaderView.ResizeMode.ResizeToContents, QHeaderView.ResizeMode.ResizeToContents]):
+            self._table_contracts.horizontalHeader().setSectionResizeMode(col, val)
 
         # add labels for the widget
+        font_bold = self.font()
+        font_bold.setBold(True)
         group_contracts_layout.addWidget(QLabel("Selektierter Preis / Monat:"), 2, 0)
         self._label_price_month = QLabel()
+        self._label_price_month.setFont(font_bold)
         group_contracts_layout.addWidget(self._label_price_month, 2, 1)
         group_contracts_layout.addWidget(QLabel("Selektierter Preis / Jahr:"), 3, 0)
         self._label_price_year = QLabel()
+        self._label_price_year.setFont(font_bold)
         group_contracts_layout.addWidget(self._label_price_year, 3, 1)
 
         self.refresh()
