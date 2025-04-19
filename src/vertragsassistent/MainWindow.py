@@ -58,6 +58,7 @@ class MainWindow(QMainWindow):
         for col, val in enumerate([QHeaderView.ResizeMode.Interactive, QHeaderView.ResizeMode.Stretch,
                                    QHeaderView.ResizeMode.ResizeToContents, QHeaderView.ResizeMode.ResizeToContents]):
             self._table_contracts.horizontalHeader().setSectionResizeMode(col, val)
+        self._table_contracts.setSortingEnabled(True)
 
         # add labels for the widget
         font_bold = self.font()

@@ -85,7 +85,7 @@ class ContractDialog(QDialog):
         # tags
         self._group_tags = QWidget()
         tab_widget.addTab(self._group_tags, "Tags")
-        layout_tags = QVBoxLayout(self)
+        layout_tags = QVBoxLayout()
         self._group_tags.setLayout(layout_tags)
         self._tag_list = TagListView(self._contract)
         layout_tags.addWidget(self._tag_list)
@@ -93,7 +93,7 @@ class ContractDialog(QDialog):
         # pricing table
         self._group_pricing = QWidget()
         tab_widget.addTab(self._group_pricing, "Preise")
-        layout_pricing = QGridLayout(self)
+        layout_pricing = QGridLayout()
         self._group_pricing.setLayout(layout_pricing)
 
         self._table_pricing = QTableView(self)
@@ -110,7 +110,7 @@ class ContractDialog(QDialog):
         # documents
         self._group_docs = QWidget()
         tab_widget.addTab(self._group_docs, "Dokumente")
-        layout_docs = QGridLayout(self)
+        layout_docs = QGridLayout()
         self._group_docs.setLayout(layout_docs)
 
         self._table_docs = QTableView(self)
