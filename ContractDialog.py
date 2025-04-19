@@ -81,8 +81,8 @@ class ContractDialog(QDialog):
         self._group_tags = QGroupBox("Tags", self)
         layout_tags = QVBoxLayout(self)
         self._group_tags.setLayout(layout_tags)
-        tag_list = TagListView(self._contract)
-        layout_tags.addWidget(tag_list)
+        self._tag_list = TagListView(self._contract)
+        layout_tags.addWidget(self._tag_list)
         layout.addWidget(self._group_tags, 5, 0, 1, 2)
 
         # pricing table
@@ -127,6 +127,7 @@ class ContractDialog(QDialog):
 
     def contract_changed(self):
         enabled = self._contract is not None
+        self._group_tags.setEnabled(enabled)
         self._group_pricing.setEnabled(enabled)
         self._group_docs.setEnabled(enabled)
         self._btn_delete.setEnabled(enabled)
@@ -135,6 +136,9 @@ class ContractDialog(QDialog):
             self._table_pricing.setModel(self._table_pricing_model)
             for col in range(4):
                 self._table_pricing.horizontalHeader().setSectionResizeMode(col, QHeaderView.ResizeMode.Stretch)
+
+            self._tag_list.set_contract(self._contract)
+
             self._table_docs_model = DocumentModel(self._contract)
             self._table_docs.setModel(self._table_docs_model)
             self._table_docs.horizontalHeader().setStretchLastSection(True)
@@ -332,7 +336,7 @@ class DocumentModel(QtCore.QAbstractTableModel):
     def reload(self):
         self._docs = ContractDocument.select(ContractDocument)\
             .where(ContractDocument.contract == self._contract)\
-            .order_by(ContractDocument.date)
+            .order_by(ContractDocument.date, ContractDocument.description)
         self.layoutChanged.emit()
 
     def get_row_item(self, row: int) -> ContractDocument:

@@ -11,6 +11,7 @@ class MainWindow(QMainWindow):
     def __init__(self, file: str):
         super().__init__()
         self._contracts = []
+        self._tag_list = []
         self.setWindowTitle(f"Vertragsassistenz ({file})")
         self.setMinimumSize(500, 300)
 
@@ -35,6 +36,7 @@ class MainWindow(QMainWindow):
         group_contract_tags_layout = QVBoxLayout()
         group_contract_tags.setLayout(group_contract_tags_layout)
         self._contract_tags = TagListView()
+        self._contract_tags.selected_tags_changed.connect(self.apply_tag_filter)
         group_contract_tags_layout.addWidget(self._contract_tags)
 
         # add table for contracts
@@ -74,14 +76,23 @@ class MainWindow(QMainWindow):
         ContractDialog(self._contracts[row]).exec()
         self.refresh()
 
+    @QtCore.Slot(object)
+    def apply_tag_filter(self, tag_list: list[ContractTag]):
+        self._tag_list = tag_list
+        self.refresh()
+
     @QtCore.Slot()
     def refresh(self):
+        self._contract_tags.reload()
         self._table_contracts.clearContents()
+        self._table_contracts.setRowCount(0)
         self._contracts.clear()
 
         query = Contract.select()
         total_price_month = decimal.Decimal(0)
         total_price_year = decimal.Decimal(0)
+        if self._tag_list:
+            query = filter(lambda x: any((tag in self._tag_list) for tag in x.tags), query)
         for row, contract in enumerate(query):
             today = datetime.date.today()
             active_pricing_query = ContractPricing.select()\

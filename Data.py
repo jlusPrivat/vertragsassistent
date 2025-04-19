@@ -7,7 +7,8 @@ db = SqliteDatabase(None)
 
 
 def create_tables() -> None:
-    db.create_tables([Contract, ContractPricing, ContractDocument, ContractTag, ContractTagConnection])
+    db.create_tables([Contract, ContractPricing, ContractDocument, ContractTag,
+                      ContractTag.contracts.get_through_model()])
 
 
 class BaseModel(Model):
@@ -37,11 +38,7 @@ class ContractPricing(BaseModel):
 
 class ContractTag(BaseModel):
     name = CharField()
-
-
-class ContractTagConnection(BaseModel):
-    contract = ForeignKeyField(Contract, backref='tag')
-    tag = ForeignKeyField(ContractTag, backref='tag')
+    contracts = ManyToManyField(Contract, backref='tags')
 
 
 class ContractDocument(BaseModel):
