@@ -1,5 +1,6 @@
 from peewee import *
 import datetime
+import os.path
 
 
 db = SqliteDatabase(None)
@@ -45,6 +46,14 @@ class ContractTagConnection(BaseModel):
 
 class ContractDocument(BaseModel):
     contract = ForeignKeyField(Contract, backref='contract')
-    file = CharField()
+    file = TextField()
     description = CharField()
     date = DateField()
+
+    @property
+    def absolute_file(self):
+        return os.path.join(os.path.dirname(db.database), str(self.file))
+
+    @property
+    def file_exists(self):
+        return os.path.isfile(self.absolute_file)

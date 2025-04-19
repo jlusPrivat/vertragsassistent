@@ -2,6 +2,9 @@ from PySide6.QtWidgets import *
 from PySide6 import QtCore, QtGui
 import decimal
 from Data import *
+import DocumentDialog
+import subprocess
+import platform
 
 
 class ContractDialog(QDialog):
@@ -9,8 +12,9 @@ class ContractDialog(QDialog):
         super().__init__()
         self._contract = contract
         self._table_pricing_model = None
+        self._table_docs_model = None
         self.setWindowTitle("Vertragsverwaltung")
-        self.setFixedSize(600, 500)
+        self.setMinimumSize(600, 500)
 
         # initialize layout
         layout = QGridLayout(self)
@@ -68,6 +72,7 @@ class ContractDialog(QDialog):
         self._btn_delete.clicked.connect(self.delete_contract)
         widget_btns_layout.addWidget(self._btn_delete)
         btn_accept = QPushButton("Speichern")
+        btn_accept.setDefault(True)
         btn_accept.clicked.connect(self.save_contract)
         widget_btns_layout.addWidget(btn_accept)
 
@@ -88,17 +93,42 @@ class ContractDialog(QDialog):
         btn_rem_pricing.clicked.connect(self.delete_pricing)
         layout_pricing.addWidget(btn_rem_pricing, 1, 1)
 
+        # documents
+        self._group_docs = QGroupBox("Dokumente", self)
+        layout_docs = QGridLayout(self)
+        self._group_docs.setLayout(layout_docs)
+        layout.addWidget(self._group_docs, 6, 0, 1, 2)
+
+        self._table_docs = QTableView(self)
+        self._table_docs.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        self._table_docs.doubleClicked.connect(self.open_doc)
+        layout_docs.addWidget(self._table_docs, 0, 0, 1, 3)
+
+        btn_add_doc = QPushButton("Neues Dokument")
+        btn_add_doc.clicked.connect(self.new_doc)
+        layout_docs.addWidget(btn_add_doc, 1, 0)
+        btn_edit_doc = QPushButton("Dokument bearbeiten")
+        btn_edit_doc.clicked.connect(self.edit_doc)
+        layout_docs.addWidget(btn_edit_doc, 1, 1)
+        btn_del_doc = QPushButton("Dokument Löschen")
+        btn_del_doc.clicked.connect(self.delete_doc)
+        layout_docs.addWidget(btn_del_doc, 1, 2)
+
         self.contract_changed()
 
     def contract_changed(self):
         enabled = self._contract is not None
         self._group_pricing.setEnabled(enabled)
+        self._group_docs.setEnabled(enabled)
         self._btn_delete.setEnabled(enabled)
         if enabled:
             self._table_pricing_model = ContractModel(self._contract)
             self._table_pricing.setModel(self._table_pricing_model)
             for col in range(4):
                 self._table_pricing.horizontalHeader().setSectionResizeMode(col, QHeaderView.ResizeMode.Stretch)
+            self._table_docs_model = DocumentModel(self._contract)
+            self._table_docs.setModel(self._table_docs_model)
+            self._table_docs.horizontalHeader().setStretchLastSection(True)
 
     @QtCore.Slot()
     def save_contract(self):
@@ -142,10 +172,49 @@ class ContractDialog(QDialog):
 
     @QtCore.Slot()
     def delete_pricing(self):
+        idx = self._table_pricing.currentIndex()
+        if not idx.isValid():
+            return
         if QMessageBox.question(self, "Preis löschen", "Wirklich Preis löschen?")\
                 != QMessageBox.StandardButton.Yes:
             return
-        self._table_pricing_model.removeRow(self._table_pricing.currentIndex().row())
+        self._table_pricing_model.removeRow(idx.row())
+
+    @QtCore.Slot()
+    def new_doc(self):
+        DocumentDialog.DocumentDialog(self._contract, None).exec()
+        self._table_docs_model.reload()
+
+    @QtCore.Slot()
+    def edit_doc(self):
+        idx = self._table_docs.currentIndex()
+        if not idx.isValid():
+            return
+        doc = self._table_docs_model.get_row_item(idx.row())
+        DocumentDialog.DocumentDialog(self._contract, doc).exec()
+        self._table_docs_model.reload()
+
+    @QtCore.Slot()
+    def delete_doc(self):
+        idx = self._table_docs.currentIndex()
+        if not idx.isValid():
+            return
+        if QMessageBox.question(self, "Dokument löschen", "Wirklich die Referenz auf das Dokument löschen?")\
+                != QMessageBox.StandardButton.Yes:
+            return
+        self._table_docs_model.removeRow(self._table_docs.currentIndex().row())
+
+    @QtCore.Slot()
+    def open_doc(self, idx: QtCore.QModelIndex):
+        if not idx.isValid():
+            return
+        path = self._table_docs_model.get_row_item(idx.row()).absolute_file
+        if platform.system() == 'Windows':
+            subprocess.run(['start', path], shell=True)
+        elif platform.system() == 'Darwin':
+            subprocess.run(['open', path])
+        else:
+            subprocess.run(['xdg-open', path])
 
 
 class ContractModel(QtCore.QAbstractTableModel):
@@ -237,5 +306,61 @@ class ContractModel(QtCore.QAbstractTableModel):
 
     def removeRow(self, row: int, /, parent: QtCore.QModelIndex | QtCore.QPersistentModelIndex = ...) -> bool:
         self._pricings[row].delete_instance()
+        self.reload()
+        return True
+
+
+class DocumentModel(QtCore.QAbstractTableModel):
+    col_date = 0
+    col_description = 1
+
+    def __init__(self, contract: Contract, **kwargs):
+        super().__init__(**kwargs)
+        self._docs = None
+        self._contract = contract
+        self.reload()
+
+    def reload(self):
+        self._docs = ContractDocument.select(ContractDocument)\
+            .where(ContractDocument.contract == self._contract)\
+            .order_by(ContractDocument.date)
+        self.layoutChanged.emit()
+
+    def get_row_item(self, row: int) -> ContractDocument:
+        return self._docs[row]
+
+    def columnCount(self, /, parent: QtCore.QModelIndex | QtCore.QPersistentModelIndex = ...):
+        return 2
+
+    def rowCount(self, /, parent: QtCore.QModelIndex | QtCore.QPersistentModelIndex = ...):
+        return len(self._docs)
+
+    def flags(self, index: QtCore.QModelIndex | QtCore.QPersistentModelIndex, /):
+        return QtCore.Qt.ItemFlag.ItemIsEnabled | QtCore.Qt.ItemFlag.ItemIsSelectable
+
+    def headerData(self, section: int, orientation: QtCore.Qt.Orientation, /, role: int = ...):
+        if role != QtCore.Qt.ItemDataRole.DisplayRole:
+            return None
+        if orientation == QtCore.Qt.Orientation.Horizontal:
+            if section == self.col_date:
+                return "Datum"
+            if section == self.col_description:
+                return "Bezeichnung"
+        else:
+            return section + 1
+
+    def data(self, index, role=QtCore.Qt.ItemDataRole.DisplayRole):
+        item: ContractDocument = self._docs[index.row()]
+        if role == QtCore.Qt.ItemDataRole.DisplayRole:
+            if index.column() == self.col_date:
+                return str(item.date)
+            if index.column() == self.col_description:
+                return item.description
+        if role == QtCore.Qt.ItemDataRole.ForegroundRole:
+            if not item.file_exists:
+                return QtGui.QColor(180, 0, 0)
+
+    def removeRow(self, row: int, /, parent: QtCore.QModelIndex | QtCore.QPersistentModelIndex = ...) -> bool:
+        self._docs[row].delete_instance()
         self.reload()
         return True

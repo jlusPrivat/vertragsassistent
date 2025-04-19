@@ -1,6 +1,5 @@
 from PySide6.QtWidgets import *
 from PySide6 import QtCore, QtGui
-import datetime
 
 from Data import *
 from ContractDialog import ContractDialog
