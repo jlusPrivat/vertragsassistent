@@ -96,7 +96,7 @@ class MainWindow(QMainWindow):
         self._table_contracts.setRowCount(0)
         self._contracts.clear()
 
-        query = Contract.select()
+        query = Contract.select().order_by(Contract.name, Contract.company)
         total_price_month = decimal.Decimal(0)
         total_price_year = decimal.Decimal(0)
         if self._tag_list:
@@ -119,7 +119,7 @@ class MainWindow(QMainWindow):
             total_price_month += decimal.Decimal(per_month)
             total_price_year += decimal.Decimal(per_year)
             first_item = QTableWidgetItem(contract.name)
-            if contract.reminder is not None and contract.reminder >= today:
+            if contract.reminder is not None and contract.reminder <= today:
                 first_item.setData(QtCore.Qt.ItemDataRole.BackgroundRole, QtGui.QColor(180, 180, 255))
             self._table_contracts.setItem(row, 0, first_item)
             self._table_contracts.setItem(row, 1, QTableWidgetItem(contract.company))
