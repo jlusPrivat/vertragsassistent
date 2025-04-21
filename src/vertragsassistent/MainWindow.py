@@ -33,12 +33,22 @@ class MainWindow(QMainWindow):
         # add list view for the contract tags
         group_contract_tags = QGroupBox("Vertrags Tags", self)
         window_layout.addWidget(group_contract_tags, 1, 0, 1, 2)
-        group_contract_tags_layout = QVBoxLayout()
+        group_contract_tags_layout = QGridLayout()
         group_contract_tags.setLayout(group_contract_tags_layout)
         self._contract_tags = TagListView()
         self._contract_tags.setFixedHeight(70)
         self._contract_tags.selected_tags_changed.connect(self.apply_tag_filter)
-        group_contract_tags_layout.addWidget(self._contract_tags)
+        group_contract_tags_layout.addWidget(self._contract_tags, 0, 0, 1, 4)
+        group_contract_tags_layout.setColumnStretch(3, 1)
+
+        group_contract_tags_layout.addWidget(QLabel("Verknüpfen:"), 1, 0)
+        self._radio_tag_sort_and = QRadioButton("UND", group_contract_tags)
+        self._radio_tag_sort_and.setChecked(True)
+        self._radio_tag_sort_and.clicked.connect(self.refresh)
+        group_contract_tags_layout.addWidget(self._radio_tag_sort_and, 1, 1)
+        self._radio_tag_sort_or = QRadioButton("ODER", group_contract_tags)
+        self._radio_tag_sort_or.clicked.connect(self.refresh)
+        group_contract_tags_layout.addWidget(self._radio_tag_sort_or, 1, 2)
 
         # add table for contracts
         group_contracts = QGroupBox("Verträge", self)
@@ -100,7 +110,13 @@ class MainWindow(QMainWindow):
         total_price_month = decimal.Decimal(0)
         total_price_year = decimal.Decimal(0)
         if self._tag_list:
-            query = filter(lambda x: any((tag in self._tag_list) for tag in x.tags), query)
+            if self._radio_tag_sort_or.isChecked():
+                # select all items, where any tag is in the list of tags
+                sel = any
+            else:
+                # select all items, where all selected tags match
+                sel = all
+            query = filter(lambda con: sel((sel_tag in con.tags) for sel_tag in self._tag_list), query)
         for row, contract in enumerate(query):
             today = datetime.date.today()
             active_pricing_query = ContractPricing.select()\
