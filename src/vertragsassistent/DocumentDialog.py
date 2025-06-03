@@ -43,7 +43,7 @@ class DocumentDialog(QDialog):
         f = QFileDialog.getOpenFileName(self, "Dokument auswählen", basedir)[0]
         if len(f) == 0 or not os.path.isfile(f):
             return
-        f = os.path.relpath(f, basedir)
+        f = os.path.relpath(f, basedir).replace('\\', '/')
         self._input_path.setText(f)
 
     @QtCore.Slot()

@@ -6,6 +6,7 @@ from TagListView import TagListView
 import DocumentDialog
 import subprocess
 import platform
+import os
 
 
 class ContractDialog(QDialog):
@@ -226,9 +227,9 @@ class ContractDialog(QDialog):
     def open_doc(self, idx: QtCore.QModelIndex):
         if not idx.isValid():
             return
-        path = self._table_docs_model.get_row_item(idx.row()).absolute_file
+        path = f'"{self._table_docs_model.get_row_item(idx.row()).absolute_file}"'
         if platform.system() == 'Windows':
-            subprocess.run(['start', path], shell=True)
+            os.startfile(path)
         elif platform.system() == 'Darwin':
             subprocess.run(['open', path])
         else:
