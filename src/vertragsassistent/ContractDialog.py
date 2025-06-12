@@ -227,7 +227,7 @@ class ContractDialog(QDialog):
     def open_doc(self, idx: QtCore.QModelIndex):
         if not idx.isValid():
             return
-        path = f'"{self._table_docs_model.get_row_item(idx.row()).absolute_file}"'
+        path = self._table_docs_model.get_row_item(idx.row()).absolute_file
         if platform.system() == 'Windows':
             os.startfile(path)
         elif platform.system() == 'Darwin':
